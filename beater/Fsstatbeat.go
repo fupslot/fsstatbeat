@@ -43,7 +43,6 @@ func (bt *fsstatbeat) Run(b *beat.Beat) error {
 	}
 
 	ticker := time.NewTicker(bt.config.Period)
-	counter := 1
 	for {
 		select {
 		case <-bt.done:
@@ -51,16 +50,29 @@ func (bt *fsstatbeat) Run(b *beat.Beat) error {
 		case <-ticker.C:
 		}
 
+		stat, err := Fsstat(bt.config.Resource)
+		if err != nil {
+			logp.Err(err.Error())
+			continue
+		}
+
 		event := beat.Event{
 			Timestamp: time.Now(),
 			Fields: common.MapStr{
-				"type":    b.Info.Name,
-				"counter": counter,
+				"type": b.Info.Name,
+				"fsstat": common.MapStr{
+					"name":  stat.name,
+					"path":  stat.path,
+					"umask": stat.umask,
+					"owner": stat.owner,
+					"perm":  stat.perm,
+					"group": stat.group,
+					"octal": stat.octal,
+				},
 			},
 		}
 		bt.client.Publish(event)
 		logp.Info("Event sent")
-		counter++
 	}
 }
 

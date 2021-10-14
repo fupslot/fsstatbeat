@@ -5,10 +5,19 @@ package config
 
 import "time"
 
+type Resource struct {
+	Id          string
+	Description string
+	Path        string
+	Condition   string
+}
+
 type Config struct {
-	Period time.Duration `config:"period"`
+	Period   time.Duration `config:"period"`
+	Resource Resource      `config:"resource"`
 }
 
 var DefaultConfig = Config{
-	Period: 1 * time.Second,
+	Period:   1 * time.Second,
+	Resource: Resource{},
 }
