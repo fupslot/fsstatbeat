@@ -1,0 +1,9 @@
+- key: fsstatbeat
+  title: fsstatbeat
+  description:
+  fields:
+    - name: counter
+      type: long
+      required: true
+      description: >
+        PLEASE UPDATE DOCUMENTATION
