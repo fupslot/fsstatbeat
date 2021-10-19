@@ -21,7 +21,7 @@ type FileState struct {
 }
 
 func Fsstat(r config.Resource) (state *FileState, err error) {
-	if info, err := os.Stat(r.Path); err == nil {
+	if info, err := os.Stat(r.File.Path); err == nil {
 		stat := info.Sys().(*syscall.Stat_t)
 		uid := stat.Uid
 		gid := stat.Gid
@@ -36,8 +36,8 @@ func Fsstat(r config.Resource) (state *FileState, err error) {
 		// fmt.Printf("%s %s %s %s %s\n", filePath, umask, octal, u.Username, g.Name)
 
 		state := &FileState{
-			name:  filepath.Base(r.Path),
-			path:  r.Path,
+			name:  filepath.Base(r.File.Path),
+			path:  r.File.Path,
 			umask: umask,
 			octal: octal,
 			perm:  info.Mode().Perm(),
@@ -45,7 +45,6 @@ func Fsstat(r config.Resource) (state *FileState, err error) {
 			group: g.Name,
 		}
 
-		// fmt.Printf("%+v", fileResource)
 		return state, nil
 	}
 

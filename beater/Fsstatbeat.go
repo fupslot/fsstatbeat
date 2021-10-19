@@ -2,6 +2,7 @@ package beater
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/elastic/beats/v7/libbeat/beat"
@@ -16,6 +17,7 @@ type fsstatbeat struct {
 	done   chan struct{}
 	config config.Config
 	client beat.Client
+	b      *beat.Beat
 }
 
 // New creates an instance of fsstatbeat.
@@ -42,6 +44,8 @@ func (bt *fsstatbeat) Run(b *beat.Beat) error {
 		return err
 	}
 
+	bt.b = b
+
 	ticker := time.NewTicker(bt.config.Period)
 	for {
 		select {
@@ -50,30 +54,55 @@ func (bt *fsstatbeat) Run(b *beat.Beat) error {
 		case <-ticker.C:
 		}
 
-		stat, err := Fsstat(bt.config.Resource)
-		if err != nil {
-			logp.Err(err.Error())
-			continue
-		}
-
-		event := beat.Event{
-			Timestamp: time.Now(),
-			Fields: common.MapStr{
-				"type": b.Info.Name,
-				"fsstat": common.MapStr{
-					"name":  stat.name,
-					"path":  stat.path,
-					"umask": stat.umask,
-					"owner": stat.owner,
-					"perm":  stat.perm,
-					"group": stat.group,
-					"octal": stat.octal,
-				},
-			},
-		}
-		bt.client.Publish(event)
-		logp.Info("Event sent")
+		var wg sync.WaitGroup
+		bt.RunChecks(&wg)
+		wg.Wait()
 	}
+}
+
+func (bt *fsstatbeat) RunChecks(wg *sync.WaitGroup) {
+	wg.Add(1)
+	defer func() { wg.Done() }()
+
+	for _, r := range bt.config.Rules {
+		bt.Check(&r)
+	}
+}
+
+func (bt *fsstatbeat) Check(r *config.Rule) {
+	for _, res := range r.Resources {
+		if res.File.Path != "" {
+			stat, err := Fsstat(res)
+			if err != nil {
+				logp.Err(err.Error())
+				continue
+			}
+
+			bt.PublishEventFile(stat)
+		} else if res.Proc.Name != "" {
+			logp.Info("!!!%s", res.Proc.Name)
+		}
+	}
+}
+
+func (bt *fsstatbeat) PublishEventFile(st *FileState) {
+	event := beat.Event{
+		Timestamp: time.Now(),
+		Fields: common.MapStr{
+			"type": bt.b.Info.Name,
+			"file": common.MapStr{
+				"name":  st.name,
+				"path":  st.path,
+				"umask": st.umask,
+				"owner": st.owner,
+				"perm":  st.perm,
+				"group": st.group,
+				"octal": st.octal,
+			},
+		},
+	}
+	bt.client.Publish(event)
+	logp.Info("Event sent")
 }
 
 // Stop stops fsstatbeat.

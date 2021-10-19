@@ -6,13 +6,24 @@ fsstatbeat:
   # Defines how often an event is sent to the output
   period: 10s
 
-  # Defines list of resources to monitor
-  resource:
-    id: resource-1
-    description: Dummy resource for the testing purposes
-    path: /tmp/fsstatbeat/resource-1.yaml
-    condition: |
-      file.octal == 777
+  # Defines list of rules
+  rules:
+    - id: 1
+      name: file
+      description: Dummy file resource
+      resources:
+        - file:
+            path: /tmp/fsstatbeat/resource-1.yaml
+          condition: |
+            file.octal == 777
+    # - id: 2
+    #   name: process
+    #   description: Dummy process resource
+    #   resources:
+    #     - process:
+    #         name: kube-apiserver
+    #       condition:
+    #         process.flag[--authorization-mode] != "AlwaysAllow"
 
 
 # ================================== General ===================================
@@ -66,11 +77,11 @@ fsstatbeat:
 # The cloud.id setting overwrites the `output.elasticsearch.hosts` and
 # `setup.kibana.host` options.
 # You can find the `cloud.id` in the Elastic Cloud web UI.
-cloud.id: elasticdev:dXMtY2VudHJhbDEuZ2NwLmNsb3VkLmVzLmlvJDAyNzg3MTUzOTRlODRhYzBiMzM3YzJjNTRiYjFmMTI4JGZiMjlkY2JlYjFlMTRhNjI5MDQxYjBhYjE1NjAzYThj
+cloud.id:
 
 # The cloud.auth setting overwrites the `output.elasticsearch.username` and
 # `output.elasticsearch.password` settings. The format is `<user>:<pass>`.
-cloud.auth: elastic:3Uf0zGesX1wAxkAsEDba7YDW
+cloud.auth:
 
 # ================================== Outputs ===================================
 
@@ -79,7 +90,7 @@ cloud.auth: elastic:3Uf0zGesX1wAxkAsEDba7YDW
 # ---------------------------- Elasticsearch Output ----------------------------
 # output.elasticsearch:
 #   # Array of hosts to connect to.
-#   hosts: ["elastic-dev.es.us-central1.gcp.cloud.es.io:9243"]
+#   hosts: ["localhost:9200"]
 
 #   # Protocol - either `http` (default) or `https`.
 #   protocol: "https"
@@ -87,7 +98,7 @@ cloud.auth: elastic:3Uf0zGesX1wAxkAsEDba7YDW
 #   # Authentication credentials - either API key or username/password.
 #   #api_key: "id:api_key"
 #   username: elastic
-#   password: 3Uf0zGesX1wAxkAsEDba7YDW
+#   password:
 
 # ------------------------------ Logstash Output -------------------------------
 #output.logstash:
