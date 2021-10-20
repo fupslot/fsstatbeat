@@ -11,13 +11,13 @@ import (
 )
 
 type FileState struct {
-	name  string
-	path  string
-	umask string
-	owner string
-	group string
-	perm  os.FileMode
-	octal string
+	Name  string      `json:"name"`
+	Path  string      `json:"path"`
+	Umask string      `json:"umask"`
+	Owner string      `json:"owner"`
+	Group string      `json:"group"`
+	Perm  os.FileMode `json:"perm"`
+	Octal string      `json:"octal"`
 }
 
 func Fsstat(r config.Resource) (state *FileState, err error) {
@@ -36,13 +36,13 @@ func Fsstat(r config.Resource) (state *FileState, err error) {
 		// fmt.Printf("%s %s %s %s %s\n", filePath, umask, octal, u.Username, g.Name)
 
 		state := &FileState{
-			name:  filepath.Base(r.File.Path),
-			path:  r.File.Path,
-			umask: umask,
-			octal: octal,
-			perm:  info.Mode().Perm(),
-			owner: u.Username,
-			group: g.Name,
+			Name:  filepath.Base(r.File.Path),
+			Path:  r.File.Path,
+			Umask: umask,
+			Octal: octal,
+			Perm:  info.Mode().Perm(),
+			Owner: u.Username,
+			Group: g.Name,
 		}
 
 		return state, nil

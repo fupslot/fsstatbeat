@@ -13,9 +13,9 @@ fsstatbeat:
       description: Dummy file resource
       resources:
         - file:
-            path: /tmp/fsstatbeat/resource-1.yaml
+            path: /opt/fsstatbeat/resource-1.yaml
           condition: |
-            file.octal == 777
+            input.file.octal == "777"
     # - id: 2
     #   name: process
     #   description: Dummy process resource

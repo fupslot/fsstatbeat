@@ -1,6 +1,7 @@
 package beater
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -18,6 +19,7 @@ type fsstatbeat struct {
 	config config.Config
 	client beat.Client
 	b      *beat.Beat
+	ctx    context.Context
 }
 
 // New creates an instance of fsstatbeat.
@@ -45,6 +47,7 @@ func (bt *fsstatbeat) Run(b *beat.Beat) error {
 	}
 
 	bt.b = b
+	bt.ctx = context.Background()
 
 	ticker := time.NewTicker(bt.config.Period)
 	for {
@@ -78,27 +81,28 @@ func (bt *fsstatbeat) Check(r *config.Rule) {
 				continue
 			}
 
-			bt.PublishEventFile(stat)
+			state, err := StatEval(res, stat, bt.ctx)
+			if err != nil {
+				logp.Err(err.Error())
+				continue
+			}
+
+			bt.PublishEventFile(stat, state)
 		} else if res.Proc.Name != "" {
 			logp.Info("!!!%s", res.Proc.Name)
 		}
 	}
 }
 
-func (bt *fsstatbeat) PublishEventFile(st *FileState) {
+func (bt *fsstatbeat) PublishEventFile(st *FileState, s string) {
+	out := toMap(st)
+
 	event := beat.Event{
 		Timestamp: time.Now(),
 		Fields: common.MapStr{
-			"type": bt.b.Info.Name,
-			"file": common.MapStr{
-				"name":  st.name,
-				"path":  st.path,
-				"umask": st.umask,
-				"owner": st.owner,
-				"perm":  st.perm,
-				"group": st.group,
-				"octal": st.octal,
-			},
+			"type":      bt.b.Info.Name,
+			"file":      out,
+			"condition": s,
 		},
 	}
 	bt.client.Publish(event)
